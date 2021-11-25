@@ -44,7 +44,7 @@ jobs:
 
       - name: Show Environment Info
         run: |
-          ls server_manager/electron_app/release_linux
+          ls
 
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
