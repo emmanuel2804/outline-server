@@ -1,9 +1,9 @@
-name: Release Manager
+name: Deploy to Heroku
 
 on:
   push:
-    tags:
-      - "v[0-9]*"
+    branches:
+      - master
 
 env:
   SENTRY_DSN: https://533e56d1b2d64314bd6092a574e6d0f1@o74047.ingest.sentry.io/215496
@@ -15,7 +15,7 @@ jobs:
     environment: Production Outline Manager
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-latest]
+        os: [ubuntu-20.04]
       # Don't cancel jobs on other platforms if one fails
       fail-fast: false
 
@@ -42,20 +42,15 @@ jobs:
         if: runner.os == 'Linux'
         run: npm run action server_manager/electron_app/release_linux
 
-      - name: Release MacOS
-        if: runner.os == 'macOS'
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          ENCRYPTED_SIGNING_CERT_IV: ${{ secrets.ENCRYPTED_SIGNING_CERT_IV }}
-          ENCRYPTED_SIGNING_CERT_KEY: ${{ secrets.ENCRYPTED_SIGNING_CERT_KEY }}
+      - name: Show Environment Info
         run: |
-          openssl aes-256-cbc -K $ENCRYPTED_SIGNING_CERT_KEY -iv  $ENCRYPTED_SIGNING_CERT_IV -in macos-signing-certificate.p12.enc -out macos-signing-certificate.p12 -d -md sha256
-          export CSC_LINK=$(pwd)/macos-signing-certificate.p12
-          npm run action server_manager/electron_app/release_macos
+          ls server_manager/electron_app/release_linux
 
       - name: Deploy
-        uses: softprops/action-gh-release@v1
+        uses: akhileshns/heroku-deploy@v3.12.12
         with:
           files: "build/server_manager/electron_app/static/dist/*.*"
-          draft: true
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "outline-server-test" #Must be unique in Heroku
+          heroku_email: "amygovenco@gmail.com"
+          procfile: "web: npm start"
